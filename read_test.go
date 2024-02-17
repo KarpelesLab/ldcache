@@ -1,6 +1,7 @@
 package ldcache_test
 
 import (
+	"log"
 	"os"
 	"testing"
 
@@ -17,8 +18,10 @@ func TestLoading(t *testing.T) {
 	}
 	defer f.Close()
 
-	_, err = ldcache.Read(f)
+	data, err := ldcache.Read(f)
 	if err != nil {
 		t.Errorf("error: %s", err)
 	}
+
+	log.Printf("loaded data: %+v", data)
 }

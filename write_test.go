@@ -10,6 +10,7 @@ import (
 
 // test opening ldso file
 func TestReadWrite(t *testing.T) {
+	//f, err := ldcache.Open("/etc/ld.so.cache")
 	f, err := ldcache.Open("/pkg/main/media-video.ffmpeg.libs/.ld.so.cache")
 	if err != nil {
 		t.Skipf("failed to open file: %s", err)

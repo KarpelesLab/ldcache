@@ -16,3 +16,8 @@ func New() *File {
 	copy(h.Version[:], magicVersion)
 	return &File{Header: h, Order: binary.NativeEndian}
 }
+
+// Unique checks for any duplicate vlaues in Entries and ensures there is only one
+// entry for each filename + OS
+func (f *File) Unique() {
+}

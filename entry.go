@@ -2,6 +2,7 @@ package ldcache
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 	"unsafe"
 )
@@ -10,7 +11,7 @@ var entryLength = unsafe.Sizeof(rawEntry{})
 
 // Entry represents an entry in a ld.so.cache file
 type Entry struct {
-	Flags      int32
+	Flags      Flags
 	Key, Value string
 	OSVersion  uint32
 	HWCap      uint64
@@ -19,7 +20,7 @@ type Entry struct {
 }
 
 type rawEntry struct {
-	Flags      int32
+	Flags      Flags
 	Key, Value uint32
 	OSVersion  uint32
 	HWCap      uint64
@@ -51,4 +52,8 @@ func (e *Entry) Bytes(order binary.ByteOrder) []byte {
 	order.PutUint32(buf[12:16], e.OSVersion)
 	order.PutUint64(buf[16:24], e.HWCap)
 	return buf
+}
+
+func (e *Entry) String() string {
+	return fmt.Sprintf("%s (%s) => %s (OSVersion=%d HWCap=%d)", e.Key, e.Flags, e.Value, e.OSVersion, e.HWCap)
 }

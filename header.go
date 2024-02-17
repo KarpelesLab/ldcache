@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"unsafe"
 )
@@ -48,4 +49,8 @@ func (h *Header) Bytes(order binary.ByteOrder) []byte {
 	buf := &bytes.Buffer{}
 	binary.Write(buf, order, h)
 	return buf.Bytes()
+}
+
+func (h *Header) String() string {
+	return fmt.Sprintf("ld.so.cache header (%s %s), %d libs", h.Magic, h.Version, h.NLibs)
 }
