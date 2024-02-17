@@ -36,7 +36,11 @@ func (f *File) WriteTo(w io.Writer) error {
 	f.Header.TableSize = uint32(stringTable.Len())
 
 	// we're ready to write
+	// use a bufio writer so we don't really have to care about handling the errors.
+	// bufio Writer says flush will return the latest write error if any occurs and it won't
+	// process any further writes.
 	wr := bufio.NewWriter(w)
+
 	wr.Write(f.Header.Bytes(f.Order))
 	for _, e := range f.Entries {
 		wr.Write(e.Bytes(f.Order))
