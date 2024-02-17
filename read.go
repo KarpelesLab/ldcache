@@ -22,7 +22,7 @@ func Read(in io.Reader) (*File, error) {
 	// first load header
 	var order binary.ByteOrder
 	order = binary.BigEndian // default
-	h, err := loadHeader(order, in)
+	h, err := readHeader(order, in)
 	if err != nil {
 		return nil, err
 	}
@@ -39,7 +39,7 @@ func Read(in io.Reader) (*File, error) {
 
 	// load libs
 	for i := uint32(0); i < h.NLibs; i++ {
-		f.Entries[i], err = loadEntry(order, in)
+		f.Entries[i], err = readEntry(order, in)
 		if err != nil {
 			return nil, err
 		}

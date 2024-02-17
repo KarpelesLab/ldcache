@@ -18,7 +18,7 @@ type Header struct {
 	_         uint64    // 8 bytes align
 }
 
-func loadHeader(order binary.ByteOrder, r io.Reader) (*Header, error) {
+func readHeader(order binary.ByteOrder, r io.Reader) (*Header, error) {
 	h := &Header{}
 	return h, binary.Read(r, order, h)
 }

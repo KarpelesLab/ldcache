@@ -24,8 +24,8 @@ type rawEntry struct {
 	HWCap      uint64
 }
 
-func loadEntry(order binary.ByteOrder, in io.Reader) (*Entry, error) {
-	// load a single entry from a stream
+func readEntry(order binary.ByteOrder, in io.Reader) (*Entry, error) {
+	// read a single entry from a stream
 	e := &rawEntry{}
 	err := binary.Read(in, order, e)
 	if err != nil {
