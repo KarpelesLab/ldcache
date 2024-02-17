@@ -1,6 +1,7 @@
 package ldcache
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/binary"
 	"errors"
@@ -17,7 +18,7 @@ func Open(filename string) (*File, error) {
 	}
 	defer fp.Close()
 
-	return Read(fp)
+	return Read(bufio.NewReader(fp))
 }
 
 // Read reads a ld.so.cache file from a given reader, and returns an instance of File
