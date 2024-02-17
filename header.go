@@ -1,6 +1,7 @@
 package ldcache
 
 import (
+	"bytes"
 	"encoding/binary"
 	"io"
 	"unsafe"
@@ -27,4 +28,10 @@ func (h *Header) flipEndian() {
 	// ABCD to DCBA
 	h.NLibs = (h.NLibs&0xff000000)>>24 | (h.NLibs&0xff0000)>>8 | (h.NLibs&0xff00)<<8 | (h.NLibs&0xff)<<24
 	h.TableSize = (h.TableSize&0xff000000)>>24 | (h.TableSize&0xff0000)>>8 | (h.TableSize&0xff00)<<8 | (h.TableSize&0xff)<<24
+}
+
+func (h *Header) Bytes(order binary.ByteOrder) []byte {
+	buf := &bytes.Buffer{}
+	binary.Write(buf, order, h)
+	return buf.Bytes()
 }

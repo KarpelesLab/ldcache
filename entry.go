@@ -40,3 +40,13 @@ func loadEntry(order binary.ByteOrder, in io.Reader) (*Entry, error) {
 	}
 	return entry, nil
 }
+
+func (e *Entry) Bytes(order binary.ByteOrder) []byte {
+	buf := make([]byte, 24)
+	order.PutUint32(buf[:4], uint32(e.Flags))
+	order.PutUint32(buf[4:8], e.keyPos)
+	order.PutUint32(buf[8:12], e.valuePos)
+	order.PutUint32(buf[12:16], e.OSVersion)
+	order.PutUint64(buf[16:24], e.HWCap)
+	return buf
+}
