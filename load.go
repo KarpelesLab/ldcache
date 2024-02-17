@@ -7,10 +7,6 @@ import (
 	"io"
 )
 
-var (
-	MaxHeaderSize int64 = 0x1000000
-)
-
 type File struct {
 	Header  *Header
 	Entries []*Entry
