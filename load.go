@@ -27,16 +27,16 @@ func Load(in io.Reader) (*File, error) {
 	}
 
 	f := &File{
-		Header: h,
+		Header:  h,
+		Entries: make([]*Entry, h.NLibs),
 	}
 
 	// load libs
 	for i := uint32(0); i < h.NLibs; i++ {
-		e, err := loadEntry(order, in)
+		f.Entries[i], err = loadEntry(order, in)
 		if err != nil {
 			return nil, err
 		}
-		f.Entries = append(f.Entries, e)
 	}
 
 	// calculate the string table offset (header size + entry size * num of entries)
