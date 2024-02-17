@@ -35,6 +35,7 @@ func Read(in io.Reader) (*File, error) {
 	f := &File{
 		Header:  h,
 		Entries: make([]*Entry, h.NLibs),
+		Order:   order,
 	}
 
 	// load libs
