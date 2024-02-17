@@ -5,14 +5,20 @@ import (
 	"encoding/binary"
 	"errors"
 	"io"
+	"os"
 )
 
-type File struct {
-	Header  *Header
-	Entries []*Entry
+func Open(filename string) (*File, error) {
+	fp, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	defer fp.Close()
+
+	return Read(fp)
 }
 
-func Load(in io.Reader) (*File, error) {
+func Read(in io.Reader) (*File, error) {
 	// first load header
 	var order binary.ByteOrder
 	order = binary.BigEndian // default

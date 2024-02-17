@@ -17,7 +17,7 @@ func TestLoading(t *testing.T) {
 	}
 	defer f.Close()
 
-	_, err = ldcache.Load(f)
+	_, err = ldcache.Read(f)
 	if err != nil {
 		t.Errorf("error: %s", err)
 	}
