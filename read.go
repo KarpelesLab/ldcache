@@ -8,6 +8,8 @@ import (
 	"os"
 )
 
+// Open opens the provided filename and will read it as a ld.so.cache file, returning
+// an instance of File on successful read.
 func Open(filename string) (*File, error) {
 	fp, err := os.Open(filename)
 	if err != nil {
@@ -18,6 +20,8 @@ func Open(filename string) (*File, error) {
 	return Read(fp)
 }
 
+// Read reads a ld.so.cache file from a given reader, and returns an instance of File
+// on successful read.
 func Read(in io.Reader) (*File, error) {
 	// first load header
 	var order binary.ByteOrder

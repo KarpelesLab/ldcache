@@ -8,6 +8,7 @@ import (
 
 var entryLength = unsafe.Sizeof(rawEntry{})
 
+// Entry represents an entry in a ld.so.cache file
 type Entry struct {
 	Flags      int32
 	Key, Value string
@@ -41,6 +42,7 @@ func readEntry(order binary.ByteOrder, in io.Reader) (*Entry, error) {
 	return entry, nil
 }
 
+// Bytes return the entry as it would appear in a file, as binary format
 func (e *Entry) Bytes(order binary.ByteOrder) []byte {
 	buf := make([]byte, 24)
 	order.PutUint32(buf[:4], uint32(e.Flags))

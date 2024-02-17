@@ -6,6 +6,7 @@ import (
 	"io"
 )
 
+// WriteTo updates information found in Header and writes the file to the given io.Writer.
 func (f *File) WriteTo(w io.Writer) error {
 	// generate string table
 	f.Header.NLibs = uint32(len(f.Entries))
