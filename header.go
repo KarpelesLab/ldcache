@@ -3,6 +3,7 @@ package ldcache
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"io"
 	"unsafe"
 )
@@ -20,7 +21,20 @@ type Header struct {
 
 func readHeader(order binary.ByteOrder, r io.Reader) (*Header, error) {
 	h := &Header{}
-	return h, binary.Read(r, order, h)
+	err := binary.Read(r, order, h)
+	if err != nil {
+		return nil, err
+	}
+
+	// check magic and version
+	if !bytes.Equal(h.Magic[:], []byte(magicPrefix)) {
+		return nil, errors.New("invalid header: bad magic")
+	}
+	if !bytes.Equal(h.Version[:], []byte(magicVersion)) {
+		return nil, errors.New("invalid header: bad version")
+	}
+
+	return h, nil
 }
 
 func (h *Header) flipEndian() {
