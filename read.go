@@ -31,7 +31,7 @@ func Read(in io.Reader) (*File, error) {
 	if err != nil {
 		return nil, err
 	}
-	if h.NLibs > 0x1000000 {
+	if h.NLibs >= 0x1000000 {
 		// this is too many libs, probably not using the right endian, let's flip it
 		order = binary.LittleEndian
 		h.flipEndian()
