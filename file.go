@@ -5,7 +5,7 @@ import "encoding/binary"
 // File represents a ld.so.cache file data
 type File struct {
 	Header  *Header
-	Entries []*Entry
+	Entries EntryList
 	Order   binary.ByteOrder
 }
 

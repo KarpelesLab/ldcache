@@ -3,6 +3,7 @@ package ldcache_test
 import (
 	"log"
 	"os"
+	"sort"
 	"testing"
 
 	"github.com/KarpelesLab/ldcache"
@@ -22,6 +23,8 @@ func TestLoading(t *testing.T) {
 	if err != nil {
 		t.Errorf("error: %s", err)
 	}
+
+	sort.Sort(data.Entries)
 
 	log.Printf("loaded data: %+v", data)
 }
