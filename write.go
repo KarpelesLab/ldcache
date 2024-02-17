@@ -4,7 +4,19 @@ import (
 	"bufio"
 	"bytes"
 	"io"
+	"os"
 )
+
+// SaveAs creates a file with the given filename and writes the ld.so.cache data to it
+func (f *File) SaveAs(filename string) error {
+	fp, err := os.Create(filename)
+	if err != nil {
+		return err
+	}
+	defer fp.Close()
+
+	return f.WriteTo(fp)
+}
 
 // WriteTo updates information found in Header and writes the file to the given io.Writer.
 func (f *File) WriteTo(w io.Writer) error {
