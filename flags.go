@@ -2,11 +2,13 @@ package ldcache
 
 import "strconv"
 
+// Flags represents the flags field of an ld.so.cache entry, encoding both the
+// library type (ELF, libc version) and required platform/ABI information.
+// Flag values are defined in glibc's sysdeps/generic/ldconfig.h.
 type Flags int32
 
-// flag values from sysdeps/generic/ldconfig.h
-
-// String will return flags as a string as closely as to what ldconfig -p shows
+// String returns the flags as a human-readable string matching the format
+// shown by ldconfig -p (e.g. "libc6,x86-64").
 func (f Flags) String() string {
 	if f == -1 {
 		return "any"
@@ -71,7 +73,7 @@ func (f Flags) String() string {
 	case 18: // FLAG_LARCH_FLOAT_ABI_DOUBLE
 		res += ",double-float"
 	default:
-		res += strconv.FormatUint(uint64(req), 10)
+		res += "," + strconv.FormatUint(uint64(req), 10)
 	}
 
 	return res

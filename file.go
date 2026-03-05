@@ -22,7 +22,7 @@ type uniqueKey struct {
 	Flags Flags
 }
 
-// Unique checks for any duplicate vlaues in Entries and ensures there is only one
+// Unique checks for any duplicate values in Entries and ensures there is only one
 // entry for each filename + Flags
 func (f *File) Unique() {
 	found := make(map[uniqueKey]bool)

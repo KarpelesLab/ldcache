@@ -11,6 +11,9 @@ import (
 
 var headerLength = unsafe.Sizeof(Header{})
 
+// Header represents the binary header of a glibc-ld.so.cache1.1 format cache file.
+// It contains the magic bytes, format version, number of library entries, and
+// the size of the string table.
 type Header struct {
 	Magic     [len(magicPrefix)]byte
 	Version   [3]byte
@@ -45,12 +48,14 @@ func (h *Header) flipEndian() {
 	h.TableSize = (h.TableSize&0xff000000)>>24 | (h.TableSize&0xff0000)>>8 | (h.TableSize&0xff00)<<8 | (h.TableSize&0xff)<<24
 }
 
+// Bytes returns the header serialized as it would appear in an ld.so.cache file.
 func (h *Header) Bytes(order binary.ByteOrder) []byte {
 	buf := &bytes.Buffer{}
 	binary.Write(buf, order, h)
 	return buf.Bytes()
 }
 
+// String returns a human-readable summary of the header.
 func (h *Header) String() string {
 	return fmt.Sprintf("ld.so.cache header (%s %s), %d libs", h.Magic, h.Version, h.NLibs)
 }

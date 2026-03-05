@@ -2,27 +2,74 @@
 
 # ldcache
 
-Library to read/write ld.so.cache files.
+A Go library for reading, writing, and manipulating glibc `ld.so.cache` files (the `glibc-ld.so.cache1.1` format).
 
-## Opening a ld.so.cache file
+The `ld.so.cache` file is used by the dynamic linker (`ld.so`) to quickly locate shared libraries without searching the filesystem. This package can parse existing cache files, modify their entries, and generate new cache files compatible with glibc's dynamic linker.
+
+Byte order is detected automatically when reading.
+
+## Installation
+
+```
+go get github.com/KarpelesLab/ldcache
+```
+
+## Usage
+
+### Opening an ld.so.cache file
 
 ```go
 ldso, err := ldcache.Open("/etc/ld.so.cache")
 if err != nil {
-    // ...
+    log.Fatal(err)
+}
+
+for _, entry := range ldso.Entries {
+    fmt.Println(entry)
 }
 ```
 
-After loading a ld.so.cache file, it is possible to manipulate its `Entries`, such as adding or removing entries, then generate a new file that will match the updated data.
+### Creating a new cache from scratch
 
-## Generating a ld.so.cache file
+```go
+ldso := ldcache.New()
 
-When generating a ld.so.cache file you need to be careful to ensure the data is properly sorted.
+ldso.Entries = append(ldso.Entries, &ldcache.Entry{
+    Flags: 0x0303, // libc6,x86-64
+    Key:   "libfoo.so.1",
+    Value: "/usr/lib/libfoo.so.1.2.3",
+})
+
+sort.Sort(ldso.Entries)
+err := ldso.SaveAs("/etc/ld.so.cache")
+```
+
+### Modifying and re-saving
+
+After loading an `ld.so.cache` file, you can manipulate its `Entries` (add, remove, or filter), then generate a new file.
+
+```go
+ldso, err := ldcache.Open("/etc/ld.so.cache")
+if err != nil {
+    log.Fatal(err)
+}
+
+// Remove duplicates
+ldso.Unique()
+
+// Sort entries (required for the dynamic linker's binary search)
+sort.Sort(ldso.Entries)
+
+// Write to a new file
+err = ldso.SaveAs("ld.so.cache")
+```
+
+### Sorting
+
+Entries **must** be sorted before writing if you added or reordered entries. The sort uses glibc's `_dl_cache_libcmp` algorithm, which compares numeric segments by value rather than lexicographically (e.g. `.so.9` sorts before `.so.10`).
 
 ```go
 sort.Sort(ldso.Entries)
-err := ldso.SaveAs("ld.so.cache")
-// handle err
 ```
 
-Sorting might not be needed if you did not modify the content of the file or only removed entries without altering the overall order, but when adding entries or merging files, it will be required for the linker to be able to use the file.
+Sorting may be skipped if you only removed entries without changing the order of remaining ones.

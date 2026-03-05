@@ -43,7 +43,7 @@ func readEntry(order binary.ByteOrder, in io.Reader) (*Entry, error) {
 	return entry, nil
 }
 
-// Bytes return the entry as it would appear in a file, as binary format
+// Bytes returns the entry serialized as it would appear in an ld.so.cache file.
 func (e *Entry) Bytes(order binary.ByteOrder) []byte {
 	buf := make([]byte, 24)
 	order.PutUint32(buf[:4], uint32(e.Flags))
@@ -54,6 +54,8 @@ func (e *Entry) Bytes(order binary.ByteOrder) []byte {
 	return buf
 }
 
+// String returns a human-readable representation of the entry, similar to
+// the output format of ldconfig -p.
 func (e *Entry) String() string {
 	return fmt.Sprintf("%s (%s) => %s (OSVersion=%d HWCap=%d)", e.Key, e.Flags, e.Value, e.OSVersion, e.HWCap)
 }

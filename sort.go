@@ -1,16 +1,23 @@
 package ldcache
 
-// EntryList implements the required methods to make Entries sortable
+// EntryList is a slice of cache entries that implements [sort.Interface].
+// Sorting uses the same comparison algorithm as glibc's _dl_cache_libcmp,
+// which performs version-aware string comparison (numeric segments are compared
+// by value rather than lexicographically).
 type EntryList []*Entry
 
+// Len returns the number of entries.
 func (e EntryList) Len() int {
 	return len(e)
 }
 
+// Less reports whether entry i should sort before entry j, using glibc's
+// _dl_cache_libcmp comparison in descending order (higher versions first).
 func (e EntryList) Less(i, j int) bool {
 	return dlCacheLibcmp(e[i].Key, e[j].Key) > 0
 }
 
+// Swap exchanges entries i and j.
 func (e EntryList) Swap(i, j int) {
 	e[i], e[j] = e[j], e[i]
 }
