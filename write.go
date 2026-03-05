@@ -1,13 +1,12 @@
 package ldcache
 
 import (
-	"bufio"
 	"bytes"
 	"io"
 	"os"
 )
 
-// SaveAs creates a file with the given filename and writes the ld.so.cache data to it
+// SaveAs creates a file with the given filename and writes the ld.so.cache data to it.
 func (f *File) SaveAs(filename string) error {
 	fp, err := os.Create(filename)
 	if err != nil {
@@ -15,11 +14,13 @@ func (f *File) SaveAs(filename string) error {
 	}
 	defer fp.Close()
 
-	return f.WriteTo(fp)
+	_, err = f.WriteTo(fp)
+	return err
 }
 
-// WriteTo updates information found in Header and writes the file to the given io.Writer.
-func (f *File) WriteTo(w io.Writer) error {
+// WriteTo updates information found in Header and writes the file to the given
+// [io.Writer]. It implements the [io.WriterTo] interface.
+func (f *File) WriteTo(w io.Writer) (int64, error) {
 	// generate string table
 	f.Header.NLibs = uint32(len(f.Entries))
 	offset := uint32(headerLength) + uint32(entryLength)*f.Header.NLibs
@@ -36,15 +37,20 @@ func (f *File) WriteTo(w io.Writer) error {
 	f.Header.TableSize = uint32(stringTable.Len())
 
 	// we're ready to write
-	// use a bufio writer so we don't really have to care about handling the errors.
-	// bufio Writer says flush will return the latest write error if any occurs and it won't
-	// process any further writes.
-	wr := bufio.NewWriter(w)
-
-	wr.Write(f.Header.Bytes(f.Order))
-	for _, e := range f.Entries {
-		wr.Write(e.Bytes(f.Order))
+	var n int64
+	nn, err := w.Write(f.Header.Bytes(f.Order))
+	n += int64(nn)
+	if err != nil {
+		return n, err
 	}
-	wr.Write(stringTable.Bytes())
-	return wr.Flush()
+	for _, e := range f.Entries {
+		nn, err = w.Write(e.Bytes(f.Order))
+		n += int64(nn)
+		if err != nil {
+			return n, err
+		}
+	}
+	nn, err = w.Write(stringTable.Bytes())
+	n += int64(nn)
+	return n, err
 }
