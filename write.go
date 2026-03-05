@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"io"
 	"os"
+	"strings"
 )
 
 // SaveAs creates a file with the given filename and writes the ld.so.cache data to it.
@@ -27,12 +28,18 @@ func (f *File) WriteTo(w io.Writer) (int64, error) {
 	stringTable := &bytes.Buffer{}
 
 	for _, e := range f.Entries {
-		e.keyPos = uint32(stringTable.Len()) + offset
-		stringTable.WriteString(e.Key)
-		stringTable.WriteByte(0)
 		e.valuePos = uint32(stringTable.Len()) + offset
 		stringTable.WriteString(e.Value)
 		stringTable.WriteByte(0)
+		// Optimization matching glibc: if the key is a suffix of the value,
+		// point the key into the value string instead of writing it separately.
+		if strings.HasSuffix(e.Value, e.Key) {
+			e.keyPos = e.valuePos + uint32(len(e.Value)-len(e.Key))
+		} else {
+			e.keyPos = uint32(stringTable.Len()) + offset
+			stringTable.WriteString(e.Key)
+			stringTable.WriteByte(0)
+		}
 	}
 	f.Header.TableSize = uint32(stringTable.Len())
 

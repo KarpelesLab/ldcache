@@ -1,7 +1,6 @@
 package ldcache
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/binary"
 	"errors"
@@ -10,15 +9,27 @@ import (
 )
 
 // Open opens the provided filename and will read it as a ld.so.cache file, returning
-// an instance of File on successful read.
+// an instance of [File] on successful read. If the file contains an old-format cache
+// header (ld.so-1.7.0) followed by the new format, Open will automatically skip to
+// the new-format section.
 func Open(filename string) (*File, error) {
-	fp, err := os.Open(filename)
+	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
-	defer fp.Close()
 
-	return Read(bufio.NewReader(fp))
+	start := 0
+	if !bytes.HasPrefix(data, []byte(magicPrefix)) {
+		// File doesn't start with new format header; search for it
+		// (may be preceded by old format "ld.so-1.7.0" data)
+		idx := bytes.Index(data, []byte(magicPrefix))
+		if idx < 0 {
+			return nil, errors.New("could not find new format cache header in file")
+		}
+		start = idx
+	}
+
+	return Read(bytes.NewReader(data[start:]))
 }
 
 // Read reads a ld.so.cache file from a given reader, and returns an instance of File

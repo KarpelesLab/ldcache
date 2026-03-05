@@ -12,9 +12,14 @@ func (e EntryList) Len() int {
 }
 
 // Less reports whether entry i should sort before entry j, using glibc's
-// _dl_cache_libcmp comparison in descending order (higher versions first).
+// _dl_cache_libcmp comparison in descending order (higher versions first),
+// with [Flags] as a descending tiebreaker for entries with the same key.
 func (e EntryList) Less(i, j int) bool {
-	return dlCacheLibcmp(e[i].Key, e[j].Key) > 0
+	res := dlCacheLibcmp(e[i].Key, e[j].Key)
+	if res != 0 {
+		return res > 0
+	}
+	return e[i].Flags > e[j].Flags
 }
 
 // Swap exchanges entries i and j.
