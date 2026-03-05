@@ -4,32 +4,59 @@ import (
 	"bytes"
 	"encoding/binary"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 )
 
+const (
+	// oldMagic is the magic string for the legacy ld.so-1.7.0 cache format.
+	oldMagic = "ld.so-1.7.0"
+	// oldHeaderSize is the C sizeof(struct cache_file) from glibc: magic[11] + 1 byte
+	// padding + nlibs(uint32) = 16 bytes.
+	oldHeaderSize = 16
+	// oldEntrySize is the C sizeof(struct file_entry): flags(int32) + key(uint32) +
+	// value(uint32) = 12 bytes.
+	oldEntrySize = 12
+)
+
 // Open opens the provided filename and will read it as a ld.so.cache file, returning
 // an instance of [File] on successful read. If the file contains an old-format cache
-// header (ld.so-1.7.0) followed by the new format, Open will automatically skip to
-// the new-format section.
+// header (ld.so-1.7.0) followed by the new format, Open will parse the old header
+// and skip to the new-format section at the computed offset.
 func Open(filename string) (*File, error) {
 	data, err := os.ReadFile(filename)
 	if err != nil {
 		return nil, err
 	}
 
-	start := 0
-	if !bytes.HasPrefix(data, []byte(magicPrefix)) {
-		// File doesn't start with new format header; search for it
-		// (may be preceded by old format "ld.so-1.7.0" data)
-		idx := bytes.Index(data, []byte(magicPrefix))
-		if idx < 0 {
-			return nil, errors.New("could not find new format cache header in file")
-		}
-		start = idx
+	// New-format-only cache: header starts at byte 0
+	if bytes.HasPrefix(data, []byte(magicPrefix)) {
+		return Read(bytes.NewReader(data))
 	}
 
-	return Read(bytes.NewReader(data[start:]))
+	// Combined old+new format: parse old header to find new format offset.
+	// See glibc elf/dl-cache.c: the new format starts at
+	// ALIGN_CACHE(sizeof(struct cache_file) + nlibs * sizeof(struct file_entry))
+	if !bytes.HasPrefix(data, []byte(oldMagic)) {
+		return nil, errors.New("unrecognized cache file format")
+	}
+	if len(data) < oldHeaderSize {
+		return nil, errors.New("cache file too small")
+	}
+
+	// nlibs is at offset 12 in native byte order (struct padding after char[11])
+	nlibs := binary.NativeEndian.Uint32(data[12:16])
+	offset := oldHeaderSize + int(nlibs)*oldEntrySize
+
+	if offset < 0 || offset+len(magicPrefix) > len(data) {
+		return nil, errors.New("cache file too small for new format section")
+	}
+	if !bytes.HasPrefix(data[offset:], []byte(magicPrefix)) {
+		return nil, fmt.Errorf("new format header not found at expected offset %d", offset)
+	}
+
+	return Read(bytes.NewReader(data[offset:]))
 }
 
 // Read reads a ld.so.cache file from a given reader, and returns an instance of File

@@ -1,4 +1,5 @@
 [![GoDoc](https://godoc.org/github.com/KarpelesLab/ldcache?status.svg)](https://godoc.org/github.com/KarpelesLab/ldcache)
+[![Coverage Status](https://coveralls.io/repos/github/KarpelesLab/ldcache/badge.svg?branch=master)](https://coveralls.io/github/KarpelesLab/ldcache?branch=master)
 
 # ldcache
 
