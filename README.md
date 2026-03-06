@@ -67,10 +67,14 @@ err = ldso.SaveAs("ld.so.cache")
 
 ### Sorting
 
-Entries **must** be sorted before writing if you added or reordered entries. The sort uses glibc's `_dl_cache_libcmp` algorithm, which compares numeric segments by value rather than lexicographically (e.g. `.so.9` sorts before `.so.10`).
+Entries **must** be sorted before writing if you added or reordered entries.
+
+The dynamic linker (`ld.so`) uses binary search to look up libraries in the cache: it reads the entry in the middle, compares the name with what it's looking for, then continues into the first or second half accordingly. This narrows down the result in only a few reads instead of scanning the entire file. An unsorted cache will cause the binary search to miss entries, making libraries invisible to the linker even though they are present in the file.
+
+The sort uses glibc's `_dl_cache_libcmp` algorithm, which compares numeric segments by value rather than lexicographically (e.g. `.so.9` sorts before `.so.10`).
 
 ```go
 sort.Sort(ldso.Entries)
 ```
 
-Sorting may be skipped if you only removed entries without changing the order of remaining ones.
+Sorting may be skipped if you only removed entries without changing the relative order of the remaining ones.
