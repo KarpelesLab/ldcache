@@ -45,7 +45,7 @@ func readEntry(order binary.ByteOrder, in io.Reader) (*Entry, error) {
 
 // Bytes returns the entry serialized as it would appear in an ld.so.cache file.
 func (e *Entry) Bytes(order binary.ByteOrder) []byte {
-	buf := make([]byte, 24)
+	buf := make([]byte, entryLength)
 	order.PutUint32(buf[:4], uint32(e.Flags))
 	order.PutUint32(buf[4:8], e.keyPos)
 	order.PutUint32(buf[8:12], e.valuePos)

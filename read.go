@@ -47,32 +47,40 @@ func Open(filename string) (*File, error) {
 
 	// nlibs is at offset 12 in native byte order (struct padding after char[11])
 	nlibs := binary.NativeEndian.Uint32(data[12:16])
-	offset := oldHeaderSize + int(nlibs)*oldEntrySize
+	offset := int64(oldHeaderSize) + int64(nlibs)*int64(oldEntrySize)
+	// Align to 8 bytes, matching glibc's ALIGN_CACHE macro
+	offset = (offset + 7) &^ 7
 
-	if offset < 0 || offset+len(magicPrefix) > len(data) {
+	if offset < 0 || int64(int(offset)) != offset || int(offset)+len(magicPrefix) > len(data) {
 		return nil, errors.New("cache file too small for new format section")
 	}
-	if !bytes.HasPrefix(data[offset:], []byte(magicPrefix)) {
+	if !bytes.HasPrefix(data[int(offset):], []byte(magicPrefix)) {
 		return nil, fmt.Errorf("new format header not found at expected offset %d", offset)
 	}
 
-	return Read(bytes.NewReader(data[offset:]))
+	return Read(bytes.NewReader(data[int(offset):]))
 }
 
 // Read reads a ld.so.cache file from a given reader, and returns an instance of File
 // on successful read. Byte order of the read file will be detected automatically
 func Read(in io.Reader) (*File, error) {
-	// first load header
+	// first load header using native byte order, since cache files are
+	// almost always generated on the local machine
 	var order binary.ByteOrder
-	order = binary.BigEndian // default
+	order = binary.NativeEndian
 	h, err := readHeader(order, in)
 	if err != nil {
 		return nil, err
 	}
 	if h.NLibs >= 0x1000000 {
 		// this is too many libs, probably not using the right endian, let's flip it
-		order = binary.LittleEndian
 		h.flipEndian()
+		// File uses the non-native byte order; determine which one
+		if binary.NativeEndian.Uint16([]byte{1, 0}) == 1 {
+			order = binary.BigEndian // native is LE, so file is BE
+		} else {
+			order = binary.LittleEndian // native is BE, so file is LE
+		}
 	}
 
 	f := &File{

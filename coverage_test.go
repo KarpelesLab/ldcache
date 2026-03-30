@@ -150,6 +150,42 @@ func TestOpenOldFormat(t *testing.T) {
 	}
 }
 
+func TestOpenOldFormatOddNlibs(t *testing.T) {
+	// Build a combined old+new format file where nlibs is odd,
+	// requiring ALIGN_CACHE to find the new-format header.
+	// With nlibs=1: offset = 16 + 1*12 = 28, aligned to 32.
+
+	f := ldcache.New()
+	f.Entries = ldcache.EntryList{
+		{Flags: 0x0303, Key: "libtest.so.1", Value: "/usr/lib/libtest.so.1"},
+	}
+	var newFormat bytes.Buffer
+	f.WriteTo(&newFormat)
+
+	// Old header with nlibs=1 (one fake 12-byte old entry)
+	oldHeader := make([]byte, 16)
+	copy(oldHeader, "ld.so-1.7.0")
+	binary.NativeEndian.PutUint32(oldHeader[12:16], 1)
+
+	// Add a 12-byte dummy old entry + 4 bytes alignment padding + new format
+	oldEntry := make([]byte, 12) // dummy old-format entry
+	padding := make([]byte, 4)   // alignment to 8-byte boundary: 28 → 32
+	combined := append(oldHeader, oldEntry...)
+	combined = append(combined, padding...)
+	combined = append(combined, newFormat.Bytes()...)
+
+	tmpFile := filepath.Join(t.TempDir(), "combined_odd.cache")
+	os.WriteFile(tmpFile, combined, 0644)
+
+	f2, err := ldcache.Open(tmpFile)
+	if err != nil {
+		t.Fatalf("failed to open combined format with odd nlibs: %v", err)
+	}
+	if len(f2.Entries) != 1 || f2.Entries[0].Key != "libtest.so.1" {
+		t.Errorf("unexpected entries: %v", f2.Entries)
+	}
+}
+
 func TestReadWithOrder(t *testing.T) {
 	// Write a cache, then read it back with explicit byte order
 	f := ldcache.New()

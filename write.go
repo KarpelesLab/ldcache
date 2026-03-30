@@ -16,7 +16,10 @@ func (f *File) SaveAs(filename string) error {
 	defer fp.Close()
 
 	_, err = f.WriteTo(fp)
-	return err
+	if err != nil {
+		return err
+	}
+	return fp.Close()
 }
 
 // WriteTo updates information found in Header and writes the file to the given
